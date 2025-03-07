@@ -5,12 +5,7 @@ import os
 app = Flask(__name__)  # ✅ Define Flask app BEFORE using @app.route
 
 # File to store locations
-LOCATION_FILE = "/home/TCMS/myapp/locations.json"  # ✅ Ensure this path is correct
-
-# Ensure the file exists
-if not os.path.exists(LOCATION_FILE):
-    with open(LOCATION_FILE, "w") as file:
-        json.dump([], file)
+LOCATION_FILE = "/home/TCMS/myapp/locations.json"
 
 # Load existing data
 def load_data():
