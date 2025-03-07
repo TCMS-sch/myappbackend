@@ -10,29 +10,29 @@
     <button onclick="sendLocation()">Send Location</button>
 
     <script>
-        function sendLocation() {
-            if (navigator.geolocation) {
-                navigator.geolocation.getCurrentPosition(position => {
-                    fetch("https://tcms.pythonanywhere.com/send-location", {
-                        method: "POST",
-                        headers: { "Content-Type": "application/json" },
-                        body: JSON.stringify({
-                            latitude: position.coords.latitude,
-                            longitude: position.coords.longitude,
-                            accuracy: position.coords.accuracy,
-                            timestamp: new Date().toISOString()
-                        })
+    function sendLocation() {
+        if (navigator.geolocation) {
+            navigator.geolocation.getCurrentPosition(position => {
+                fetch("https://tcms.pythonanywhere.com/send-location", {  // ✅ Ensure this points to PythonAnywhere
+                    method: "POST",
+                    headers: { "Content-Type": "application/json" },
+                    body: JSON.stringify({
+                        latitude: position.coords.latitude,
+                        longitude: position.coords.longitude,
+                        accuracy: position.coords.accuracy,
+                        timestamp: new Date().toISOString()
                     })
-                    .then(response => response.json())
-                    .then(data => alert("Location sent successfully!"))
-                    .catch(error => alert("Error sending location!"));
-                }, error => {
-                    alert("Error getting location: " + error.message);
-                });
-            } else {
-                alert("Geolocation is not supported by this browser.");
-            }
+                })
+                .then(response => response.json())
+                .then(data => alert("Location sent successfully!"))
+                .catch(error => alert("Error sending location!"));
+            }, error => {
+                alert("Error getting location: " + error.message);
+            });
+        } else {
+            alert("Geolocation is not supported by this browser.");
         }
-    </script>
+    }
+</script>
 </body>
 </html>
