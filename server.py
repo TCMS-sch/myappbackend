@@ -47,3 +47,4 @@ def receive_location():
 @app.route('/get-locations', methods=['GET'])
 def get_locations():
     return jsonify(load_data())
+
