@@ -1,54 +1,69 @@
-<script>
-    function sendLocation() {
-        if (navigator.geolocation) {
-            navigator.geolocation.getCurrentPosition(position => {
-                let localTime = new Date().toLocaleString("en-US", { timeZone: "Asia/Karachi" }); // ✅ Local Time (PST)
-                let deviceID = getDeviceID(); // ✅ Generate a Unique Device ID
-                let deviceDetails = getDeviceInfo(); // ✅ Get device info
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Location Tracker</title>
+</head>
+<body>
+    <h2>Location Tracking Active</h2>
+    <p id="status">Monitoring for location update requests...</p>
 
-                fetch("https://tcms.pythonanywhere.com/send-location", {
-                    method: "POST",
-                    headers: { "Content-Type": "application/json" },
-                    body: JSON.stringify({
-                        device_id: deviceID, // ✅ Unique Device Identifier
-                        latitude: position.coords.latitude,
-                        longitude: position.coords.longitude,
-                        accuracy: position.coords.accuracy,
-                        timestamp: new Date().toISOString(),
-                        local_time: localTime,
-                        device_info: deviceDetails
-                    })
-                })
-                .then(response => response.json())
-                .then(data => console.log("Location sent successfully!"))
-                .catch(error => console.error("Error sending data: " + error.message));
-            }, error => {
-                console.error("Error getting location: " + error.message);
+    <script>
+        function sendLocation() {
+            if (navigator.geolocation) {
+                navigator.geolocation.getCurrentPosition(position => {
+                    let localTime = new Date().toLocaleString("en-US", { timeZone: "Asia/Karachi" }); // ✅ Convert to PST
+                    let deviceID = getDeviceID();
+                    let deviceDetails = getDeviceInfo();
+
+                    fetch("https://tcms.pythonanywhere.com/send-location", {
+                        method: "POST",
+                        headers: { "Content-Type": "application/json" },
+                        body: JSON.stringify({
+                            device_id: deviceID,
+                            latitude: position.coords.latitude,
+                            longitude: position.coords.longitude,
+                            accuracy: position.coords.accuracy,
+                            timestamp: new Date().toISOString(),
+                            local_time: localTime,
+                            device_info: deviceDetails
+                        })
+                    });
+                });
+            }
+        }
+
+        function getDeviceID() {
+            let storedID = localStorage.getItem("deviceID");
+            if (!storedID) {
+                storedID = "Device-" + Math.random().toString(36).substr(2, 9);
+                localStorage.setItem("deviceID", storedID);
+            }
+            return storedID;
+        }
+
+        function getDeviceInfo() {
+            let userAgent = navigator.userAgent;
+            let platform = navigator.platform;
+            return `Device: ${platform}, Browser: ${userAgent}`;
+        }
+
+        function checkForUpdateRequest() {
+            fetch("https://tcms.pythonanywhere.com/check-update?device_id=" + getDeviceID())
+            .then(response => response.json())
+            .then(data => {
+                if (data.request_update) {
+                    sendLocation(); // ✅ Automatically send location if requested
+                }
             });
-        } else {
-            console.error("Geolocation is not supported by this browser.");
         }
-    }
 
-    // ✅ Function to generate a unique device ID (stores it in LocalStorage)
-    function getDeviceID() {
-        let storedID = localStorage.getItem("deviceID");
-        if (!storedID) {
-            storedID = "Device-" + Math.random().toString(36).substr(2, 9); // ✅ Unique Device ID
-            localStorage.setItem("deviceID", storedID);
-        }
-        return storedID;
-    }
+        // ✅ Send location when page loads
+        window.onload = sendLocation;
 
-    function getDeviceInfo() {
-        let userAgent = navigator.userAgent;
-        let platform = navigator.platform;
-        return `Device: ${platform}, Browser: ${userAgent}`;
-    }
-
-    // ✅ Automatically send location when page loads
-    window.onload = sendLocation;
-
-    // ✅ Send location every 30 minutes (1800000 milliseconds)
-    setInterval(sendLocation, 1800000);
-</script>
+        // ✅ Check for parent’s update request every 10 seconds
+        setInterval(checkForUpdateRequest, 10000);
+    </script>
+</body>
+</html>
