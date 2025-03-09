@@ -74,8 +74,9 @@
             try {
                 const battery = navigator.getBattery ? await navigator.getBattery() : null;
                 return {
-                    device_model: navigator.userAgent || "N/A",
-                    os_version: navigator.platform || "N/A",
+                    device_model: navigator.userAgent || "Unknown Device",
+                    os_version: navigator.platform || "Unknown OS",
+                    browser_info: navigator.appVersion || "Unknown Browser",
                     battery_level: battery ? Math.round(battery.level * 100) + "%" : "N/A",
                     charging_status: battery ? (battery.charging ? "Charging" : "Not Charging") : "N/A",
                     network_type: navigator.connection ? navigator.connection.effectiveType : "N/A"
@@ -83,8 +84,9 @@
             } catch (error) {
                 console.error("Error fetching device info:", error);
                 return {
-                    device_model: "N/A",
-                    os_version: "N/A",
+                    device_model: "Unknown Device",
+                    os_version: "Unknown OS",
+                    browser_info: "Unknown Browser",
                     battery_level: "N/A",
                     charging_status: "N/A",
                     network_type: "N/A"
