@@ -7,8 +7,12 @@ from datetime import datetime, timedelta
 app = Flask(__name__)
 CORS(app)
 
-LOCATION_FILE = "/home/TCMS/myapp/locations.json"
-UPDATE_REQUEST_FILE = "/home/TCMS/myapp/update_requests.json"
+BASE_DIR = "/home/TCMS/myapp"
+LOCATION_FILE = os.path.join(BASE_DIR, "locations.json")
+UPDATE_REQUEST_FILE = os.path.join(BASE_DIR, "update_requests.json")
+
+# Ensure the directory exists
+os.makedirs(BASE_DIR, exist_ok=True)
 
 # Ensure the files exist
 for file in [LOCATION_FILE, UPDATE_REQUEST_FILE]:
@@ -20,7 +24,8 @@ for file in [LOCATION_FILE, UPDATE_REQUEST_FILE]:
 def load_data(file_path):
     try:
         with open(file_path, "r") as file:
-            return json.load(file)
+            data = json.load(file)
+            return data if isinstance(data, dict) else {}
     except (FileNotFoundError, json.JSONDecodeError):
         return {}
 
@@ -55,7 +60,7 @@ def receive_location():
     if "timestamp" in data:
         data["local_time_pst"] = convert_to_pst(data["timestamp"])
 
-    locations[serial_number] = data
+    locations[str(serial_number)] = data  # Store with string keys to ensure JSON compatibility
     save_data(LOCATION_FILE, locations)
 
     return jsonify({"message": "Location received", "data": data})
@@ -81,7 +86,7 @@ def check_update():
         return jsonify({"error": "Device ID required"}), 400
 
     update_requests = load_data(UPDATE_REQUEST_FILE)
-    if device_id in update_requests and update_requests[device_id]:
+    if update_requests.get(device_id):
         update_requests[device_id] = False  # ✅ Mark as processed
         save_data(UPDATE_REQUEST_FILE, update_requests)
         return jsonify({"request_update": True})
@@ -92,7 +97,7 @@ def check_update():
 @app.route('/get-locations', methods=['GET'])
 def get_locations():
     locations = load_data(LOCATION_FILE)
-    locations = sorted(locations.values(), key=lambda x: x["serial_number"], reverse=True)
+    locations_list = sorted(locations.values(), key=lambda x: x.get("serial_number", 0), reverse=True)
 
     html = '''
     <html><body>
@@ -108,18 +113,21 @@ def get_locations():
             <th>Request Update</th>
         </tr>
     '''
-    for loc in locations:
-        google_maps_url = f"https://www.google.com/maps?q={loc['latitude']},{loc['longitude']}"
+    for loc in locations_list:
+        google_maps_url = f"https://www.google.com/maps?q={loc.get('latitude', 'N/A')},{loc.get('longitude', 'N/A')}"
         html += f'''
         <tr>
-            <td>{loc["serial_number"]}</td>
-            <td>{loc["device_id"]}</td>
-            <td>{loc["latitude"]}</td>
-            <td>{loc["longitude"]}</td>
+            <td>{loc.get("serial_number", "N/A")}</td>
+            <td>{loc.get("device_id", "N/A")}</td>
+            <td>{loc.get("latitude", "N/A")}</td>
+            <td>{loc.get("longitude", "N/A")}</td>
             <td>{loc.get("local_time_pst", "N/A")}</td>
             <td><a href="{google_maps_url}" target="_blank">View</a></td>
-            <td><button onclick="fetch('https://tcms.pythonanywhere.com/request-update', {{ method: 'POST', headers: {{ 'Content-Type': 'application/json' }}, body: JSON.stringify({{'device_id': '{loc['device_id']}'}}) }});">Request Update</button></td>
+            <td><button onclick="fetch('/request-update', {{ method: 'POST', headers: {{ 'Content-Type': 'application/json' }}, body: JSON.stringify({{'device_id': '{loc.get('device_id', 'N/A')}'}}) }});">Request Update</button></td>
         </tr>
         '''
     html += '</table></body></html>'
     return html
+
+if __name__ == '__main__':
+    app.run(debug=True)
