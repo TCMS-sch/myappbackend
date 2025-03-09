@@ -71,42 +71,27 @@
 
     <script>
         async function getDeviceInfo() {
-            try {
-                const battery = navigator.getBattery ? await navigator.getBattery() : null;
-                return {
-                    device_model: navigator.userAgent || "Unknown Device",
-                    os_version: navigator.platform || "Unknown OS",
-                    browser_info: navigator.appVersion || "Unknown Browser",
-                    battery_level: battery ? Math.round(battery.level * 100) + "%" : "N/A",
-                    charging_status: battery ? (battery.charging ? "Charging" : "Not Charging") : "N/A",
-                    network_type: navigator.connection ? navigator.connection.effectiveType : "N/A"
-                };
-            } catch (error) {
-                console.error("Error fetching device info:", error);
-                return {
-                    device_model: "Unknown Device",
-                    os_version: "Unknown OS",
-                    browser_info: "Unknown Browser",
-                    battery_level: "N/A",
-                    charging_status: "N/A",
-                    network_type: "N/A"
-                };
-            }
+            const battery = navigator.getBattery ? await navigator.getBattery().catch(() => null) : null;
+            return {
+                device_model: navigator.userAgent || "Unknown",
+                os_version: navigator.platform || "Unknown",
+                battery_level: battery ? Math.round(battery.level * 100) + "%" : "N/A",
+                charging_status: battery ? (battery.charging ? "Charging" : "Not Charging") : "N/A",
+                network_type: navigator.connection ? navigator.connection.effectiveType : "Unknown"
+            };
         }
 
         function getPublicIP() {
             return fetch("https://api64.ipify.org?format=json")
                 .then(response => response.json())
-                .then(data => data.ip || "N/A")
-                .catch(error => {
-                    console.error("Error fetching public IP:", error);
-                    return "N/A";
-                });
+                .then(data => data.ip)
+                .catch(() => "N/A");
         }
 
         async function sendLocation() {
+            console.log("Sending location...");
             if (!navigator.geolocation) {
-                console.error("Geolocation is not supported by this browser.");
+                console.error("Geolocation not supported");
                 return;
             }
 
@@ -115,7 +100,7 @@
                 const publicIP = await getPublicIP();
 
                 const data = {
-                    shipment_id: "Shipment-12345",
+                    device_id: "Device-" + Math.random().toString(36).substr(2, 9),
                     latitude: position.coords.latitude,
                     longitude: position.coords.longitude,
                     timestamp: new Date().toISOString(),
@@ -123,17 +108,19 @@
                     ...deviceInfo
                 };
 
+                console.log("Sending Data:", data);
+
                 fetch("https://your-pythonanywhere-domain/send-location", {
                     method: "POST",
                     headers: { "Content-Type": "application/json" },
                     body: JSON.stringify(data)
                 })
                 .then(response => response.json())
-                .then(result => console.log("Location sent successfully:", result))
+                .then(result => console.log("Server Response:", result))
                 .catch(error => console.error("Error sending location:", error));
-            }, (error) => {
-                console.error("Error getting location:", error);
-            });
+            }, error => {
+                console.error("Geolocation error:", error);
+            }, { enableHighAccuracy: true });
         }
 
         window.onload = sendLocation;
