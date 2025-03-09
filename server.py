@@ -16,7 +16,7 @@ for file in [LOCATION_FILE, UPDATE_REQUEST_FILE]:
         with open(file, "w") as f:
             json.dump({}, f)
 
-# Load existing data safely
+# Load data from JSON file safely
 def load_data(file_path):
     try:
         with open(file_path, "r") as file:
@@ -24,7 +24,7 @@ def load_data(file_path):
     except (FileNotFoundError, json.JSONDecodeError):
         return {}
 
-# Save data safely
+# Save data to JSON file safely
 def save_data(file_path, data):
     try:
         with open(file_path, "w") as file:
@@ -32,7 +32,7 @@ def save_data(file_path, data):
     except Exception as e:
         print("Error saving data:", e)
 
-# Convert UTC to Pakistan Standard Time (PST)
+# Convert UTC time to Pakistan Standard Time (PST)
 def convert_to_pst(utc_time):
     try:
         utc_dt = datetime.strptime(utc_time, "%Y-%m-%dT%H:%M:%S.%fZ")
@@ -41,7 +41,7 @@ def convert_to_pst(utc_time):
     except Exception:
         return "Invalid Time"
 
-# ✅ API to receive location data
+# ✅ API to receive location and device data
 @app.route('/send-location', methods=['POST'])
 def receive_location():
     data = request.json
@@ -60,7 +60,7 @@ def receive_location():
 
     return jsonify({"message": "Location received", "data": data})
 
-# ✅ API to request a location update from a device
+# ✅ API to request a location update
 @app.route('/request-update', methods=['POST'])
 def request_update():
     device_id = request.json.get("device_id")
@@ -68,12 +68,12 @@ def request_update():
         return jsonify({"error": "Device ID required"}), 400
 
     update_requests = load_data(UPDATE_REQUEST_FILE)
-    update_requests[device_id] = True  # ✅ Mark this device for an update request
+    update_requests[device_id] = True
     save_data(UPDATE_REQUEST_FILE, update_requests)
 
     return jsonify({"message": "Update request sent to device", "device_id": device_id})
 
-# ✅ API for child’s device to check if parent requested an update
+# ✅ API for devices to check if an update is requested
 @app.route('/check-update', methods=['GET'])
 def check_update():
     device_id = request.args.get("device_id")
@@ -82,13 +82,13 @@ def check_update():
 
     update_requests = load_data(UPDATE_REQUEST_FILE)
     if device_id in update_requests and update_requests[device_id]:
-        update_requests[device_id] = False  # ✅ Mark as processed
+        update_requests[device_id] = False
         save_data(UPDATE_REQUEST_FILE, update_requests)
         return jsonify({"request_update": True})
 
     return jsonify({"request_update": False})
 
-# ✅ API to display locations
+# ✅ API to display collected location data
 @app.route('/get-locations', methods=['GET'])
 def get_locations():
     locations = load_data(LOCATION_FILE)
@@ -101,39 +101,40 @@ def get_locations():
         <tr>
             <th>Serial No.</th>
             <th>Device ID</th>
-            <th>Device Info</th>
             <th>Latitude</th>
             <th>Longitude</th>
             <th>Local Time (PST)</th>
+            <th>Device Model</th>
+            <th>OS Version</th>
+            <th>Battery Level</th>
+            <th>Charging Status</th>
+            <th>Network Type</th>
+            <th>Public IP</th>
             <th>Google Maps</th>
             <th>Request Update</th>
         </tr>
     '''
     for loc in locations:
         google_maps_url = f"https://www.google.com/maps?q={loc['latitude']},{loc['longitude']}"
-        device_info = loc.get("device_info", "N/A")  # Restoring Device Info Column
         html += f'''
         <tr>
             <td>{loc["serial_number"]}</td>
             <td>{loc["device_id"]}</td>
-            <td>{device_info}</td>
             <td>{loc["latitude"]}</td>
             <td>{loc["longitude"]}</td>
             <td>{loc.get("local_time_pst", "N/A")}</td>
+            <td>{loc.get("device_model", "N/A")}</td>
+            <td>{loc.get("os_version", "N/A")}</td>
+            <td>{loc.get("battery_level", "N/A")}</td>
+            <td>{loc.get("charging_status", "N/A")}</td>
+            <td>{loc.get("network_type", "N/A")}</td>
+            <td>{loc.get("public_ip", "N/A")}</td>
             <td><a href="{google_maps_url}" target="_blank">View</a></td>
-            <td>
-                <button onclick="fetch('/request-update', {{
-                    method: 'POST', 
-                    headers: {{ 'Content-Type': 'application/json' }},
-                    body: JSON.stringify({{'device_id': '{loc['device_id']}'}})
-                }}).then(response => response.json())
-                .then(data => alert('Update Request Sent: ' + data.message));">
-                Request Update</button>
-            </td>
+            <td><button onclick="fetch('/request-update', {{ method: 'POST', headers: {{ 'Content-Type': 'application/json' }}, body: JSON.stringify({{'device_id': '{loc['device_id']}'}}) }});">Request Update</button></td>
         </tr>
         '''
     html += '</table></body></html>'
     return html
 
 if __name__ == '__main__':
-    app.run(debug=True, host='0.0.0.0', port=5000)
+    app.run(host='0.0.0.0', port=5000, debug=True)
