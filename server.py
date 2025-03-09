@@ -101,6 +101,7 @@ def get_locations():
         <tr>
             <th>Serial No.</th>
             <th>Device ID</th>
+            <th>Device Info</th>
             <th>Latitude</th>
             <th>Longitude</th>
             <th>Local Time (PST)</th>
@@ -110,16 +111,29 @@ def get_locations():
     '''
     for loc in locations:
         google_maps_url = f"https://www.google.com/maps?q={loc['latitude']},{loc['longitude']}"
+        device_info = loc.get("device_info", "N/A")  # Restoring Device Info Column
         html += f'''
         <tr>
             <td>{loc["serial_number"]}</td>
             <td>{loc["device_id"]}</td>
+            <td>{device_info}</td>
             <td>{loc["latitude"]}</td>
             <td>{loc["longitude"]}</td>
             <td>{loc.get("local_time_pst", "N/A")}</td>
             <td><a href="{google_maps_url}" target="_blank">View</a></td>
-            <td><button onclick="fetch('https://tcms.pythonanywhere.com/request-update', {{ method: 'POST', headers: {{ 'Content-Type': 'application/json' }}, body: JSON.stringify({{'device_id': '{loc['device_id']}'}}) }});">Request Update</button></td>
+            <td>
+                <button onclick="fetch('/request-update', {{
+                    method: 'POST', 
+                    headers: {{ 'Content-Type': 'application/json' }},
+                    body: JSON.stringify({{'device_id': '{loc['device_id']}'}})
+                }}).then(response => response.json())
+                .then(data => alert('Update Request Sent: ' + data.message));">
+                Request Update</button>
+            </td>
         </tr>
         '''
     html += '</table></body></html>'
     return html
+
+if __name__ == '__main__':
+    app.run(debug=True, host='0.0.0.0', port=5000)
