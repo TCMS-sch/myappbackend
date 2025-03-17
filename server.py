@@ -81,11 +81,52 @@ def get_locations():
         <meta charset="UTF-8">
         <meta name="viewport" content="width=device-width, initial-scale=1.0">
         <title>Live Location Tracker</title>
+        <style>
+            body {{
+                font-family: Arial, sans-serif;
+                margin: 20px;
+                padding: 0;
+                background-color: #f4f4f4;
+            }}
+            h2 {{
+                color: #333;
+            }}
+            table {{
+                width: 100%;
+                border-collapse: collapse;
+                margin-bottom: 20px;
+            }}
+            th, td {{
+                padding: 10px;
+                border: 1px solid #ddd;
+                text-align: left;
+            }}
+            th {{
+                background-color: #f2f2f2;
+            }}
+            button {{
+                padding: 10px 20px;
+                background-color: #4CAF50;
+                color: white;
+                border: none;
+                cursor: pointer;
+            }}
+            button:hover {{
+                background-color: #45a049;
+            }}
+            a {{
+                color: #4CAF50;
+                text-decoration: none;
+            }}
+            a:hover {{
+                text-decoration: underline;
+            }}
+        </style>
     </head>
     <body>
         <h2>Live Location Data (Page {page}/{total_pages})</h2>
         <button id="refresh-button">Get Latest Location</button>
-        <table border="1" cellspacing="0" cellpadding="5">
+        <table>
             <tr>
                 <th>Serial No.</th>
                 <th>Device ID</th>
