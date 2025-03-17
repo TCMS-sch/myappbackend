@@ -84,6 +84,7 @@ def get_locations():
     </head>
     <body>
         <h2>Live Location Data (Page {page}/{total_pages})</h2>
+        <button id="refresh-button">Get Latest Location</button>
         <table border="1" cellspacing="0" cellpadding="5">
             <tr>
                 <th>Serial No.</th>
@@ -118,6 +119,32 @@ def get_locations():
 
     html += '''
         </table>
+        <script>
+            document.getElementById('refresh-button').addEventListener('click', function() {
+                fetch('/latest-location')
+                    .then(response => response.json())
+                    .then(data => {
+                        if (data.error) {
+                            alert(data.error);
+                        } else {
+                            const table = document.querySelector('table');
+                            const newRow = table.insertRow(1); // Insert after header row
+                            newRow.innerHTML = `
+                                <td>${data.serial_number}</td>
+                                <td>${data.device_id || 'Unknown'}</td>
+                                <td>${data.latitude}</td>
+                                <td>${data.longitude}</td>
+                                <td>${data.accuracy || 'N/A'}</td>
+                                <td>${data.timestamp}</td>
+                                <td>${data.local_time_pst || 'N/A'}</td>
+                                <td>${data.device_info || 'N/A'}</td>
+                                <td><a href="https://www.google.com/maps?q=${data.latitude},${data.longitude}" target="_blank">View on Google Maps</a></td>
+                            `;
+                        }
+                    })
+                    .catch(error => console.error('Error fetching latest location:', error));
+            });
+        </script>
     '''
 
     # ✅ Pagination Links
@@ -128,6 +155,16 @@ def get_locations():
 
     html += '</body></html>'
     return html
+
+# ✅ API to fetch the latest location data
+@app.route('/latest-location', methods=['GET'])
+def latest_location():
+    locations = load_data()
+    if not locations:
+        return jsonify({"error": "No location data available"}), 404
+
+    latest_location = locations[-1]  # Get the most recent location
+    return jsonify(latest_location)
 
 if __name__ == "__main__":
     app.run(port=5000)  # Ensure the port is set to 5000
