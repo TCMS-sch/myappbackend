@@ -1,12 +1,17 @@
 from flask import Flask, request, jsonify
 from flask_cors import CORS
+from flask_cors import CORS
 import json
 import os
+from datetime import datetime, timedelta
 from datetime import datetime, timedelta
 
 app = Flask(__name__)
 CORS(app)
+app = Flask(__name__)
+CORS(app)
 
+LOCATION_FILE = "/home/TCMS/myapp/locations.json"
 LOCATION_FILE = "/home/TCMS/myapp/locations.json"
 
 # Ensure the file exists
@@ -32,6 +37,11 @@ def convert_to_pst(utc_time):
     utc_dt = datetime.strptime(utc_time, "%Y-%m-%dT%H:%M:%S.%fZ")
     pst_dt = utc_dt + timedelta(hours=5)  # ✅ Add 5 hours for PST
     return pst_dt.strftime("%Y-%m-%d %I:%M:%S %p")  # ✅ Convert to readable format
+# Convert UTC to Pakistan Standard Time (PST)
+def convert_to_pst(utc_time):
+    utc_dt = datetime.strptime(utc_time, "%Y-%m-%dT%H:%M:%S.%fZ")
+    pst_dt = utc_dt + timedelta(hours=5)  # ✅ Add 5 hours for PST
+    return pst_dt.strftime("%Y-%m-%d %I:%M:%S %p")  # ✅ Convert to readable format
 
 # ✅ API to receive location data
 @app.route('/send-location', methods=['POST'])
@@ -50,11 +60,21 @@ def receive_location():
     if "timestamp" in data:
         data["local_time_pst"] = convert_to_pst(data["timestamp"])
 
+
+    # ✅ Assign Serial Number (Auto-increment)
+    serial_number = len(locations) + 1
+    data["serial_number"] = serial_number
+
+    # ✅ Convert UTC timestamp to PST
+    if "timestamp" in data:
+        data["local_time_pst"] = convert_to_pst(data["timestamp"])
+
     locations.append(data)
     save_data(locations)
 
     return jsonify({"message": "Location received", "data": data})
 
+# ✅ API to display locations in a table (Sorted & Paginated)
 # ✅ API to display locations in a table (Sorted & Paginated)
 @app.route('/get-locations', methods=['GET'])
 def get_locations():
